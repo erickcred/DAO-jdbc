@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +26,38 @@ public class SellerDaoJDBC implements ISellerDao {
 
 	@Override
 	public void insert(Seller seller) {
-		// TODO Auto-generated method stub
+		PreparedStatement stmt = null;
+//		conn.setAutoCommit(false);
 		
+		try {
+			stmt = conn.prepareStatement(
+				"INSERT INTO seller (name, email, birthDate, baseSalary, departmentId) VALUES (?, ?, ?, ?, ?)",
+				Statement.RETURN_GENERATED_KEYS
+			);
+			
+			stmt.setString(1, seller.getName());
+			stmt.setString(2, seller.getEmail());
+			stmt.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
+			stmt.setDouble(4, seller.getBaseSalary());
+			stmt.setInt(5, seller.getDepartment().getId());
+			
+			int rowsAffected = stmt.executeUpdate();
+			
+			if (rowsAffected > 0) {
+				ResultSet rs = stmt.getGeneratedKeys();
+				if (rs.next()) {
+					int id = rs.getInt(1);
+					seller.setId(id);
+				}
+				DB.closeResultSet(rs);
+			} else {
+				throw new DbException("Unexpected erro! No rows asffected");
+			}
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(stmt);
+		}
 	}
 
 	@Override
@@ -87,8 +118,38 @@ public class SellerDaoJDBC implements ISellerDao {
 
 	@Override
 	public List<Seller> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		
+		try {
+			stmt = conn.prepareStatement(
+				"SELECT seller.*, department.name AS dpName FROM seller "
+				+ "INNER JOIN department ON seller.departmentId = department.id ORDER BY name"	
+			);
+			
+			rs = stmt.executeQuery();
+			
+			List<Seller> list = new ArrayList<Seller>();
+			Map<Integer, Department> map = new HashMap<>();
+			
+			while (rs.next()) {
+				Department dp = map.get(rs.getInt("departmentId"));
+				
+				if (dp == null) {
+					dp = instantiateDepartment(rs);
+					map.put(rs.getInt("departmentId"), dp);
+				}
+
+				Seller obj = instantiateSeller(rs, dp);
+				list.add(obj);
+			}
+			return list;			
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeResultSet(rs);
+			DB.closeStatement(stmt);
+		}
 	}
 	
 	@Override
@@ -121,6 +182,9 @@ public class SellerDaoJDBC implements ISellerDao {
 			return list;
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeResultSet(rs);
+			DB.closeStatement(stmt);
 		}
 	}
 
