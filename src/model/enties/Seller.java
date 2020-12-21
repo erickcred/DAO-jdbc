@@ -29,6 +29,10 @@ public class Seller implements Serializable {
 		return this.id;
 	}
 	
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	
 	public String getName() {
 		return this.name;
 	}
@@ -49,8 +53,16 @@ public class Seller implements Serializable {
 		return this.birthDate;
 	}
 	
+	public void setBirthDate(Date birthDate) {
+		this.birthDate = birthDate;
+	}
+	
 	public Double getBaseSalary() {
 		return this.baseSalary;
+	}
+	
+	public void setBaseSalary(Double baseSalary) {
+		this.baseSalary = baseSalary;
 	}
 	
 	public Department getDepartment() {
