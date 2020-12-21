@@ -8,13 +8,11 @@ import model.enties.Seller;
 public class Program {
 
 	public static void main(String[] args) {
-				
-		Seller seller = null;
 		
 		ISellerDao sellerDao = DaoFactory.createSellerDao();
-		seller = sellerDao.findById(2);
-		DB.closeConnection();
+		Seller seller = sellerDao.findById(2);
 		
+		System.out.println("=== TEST 1: seller findByid ===");
 		System.out.println(seller);
 	}
 }
